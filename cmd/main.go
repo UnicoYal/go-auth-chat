@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const serverPort = 50050
@@ -35,12 +34,9 @@ func (s *server) GetUser(ctx context.Context, req *desc.GetUserRequest) (*desc.G
 
 	return &desc.GetUserResponse{
 		UserInfo: &desc.UserInfo{
-			Id:        req.GetId(),
-			Email:     gofakeit.Email(),
-			Name:      gofakeit.Name(),
-			Role:      desc.UserRoles(gofakeit.Number(0, 1)),
-			CreatedAt: timestamppb.New(gofakeit.Date()),
-			UpdatedAt: timestamppb.New(gofakeit.Date()),
+			Email: gofakeit.Email(),
+			Name:  gofakeit.Name(),
+			Role:  desc.UserRoles(gofakeit.Number(0, 1)),
 		}}, nil
 }
 
