@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	"go-auth-chat/internal/service/model"
+	"go-auth-chat/internal/model"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/protobuf/types/known/emptypb"

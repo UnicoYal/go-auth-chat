@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	"go-auth-chat/internal/service/model"
+	"go-auth-chat/internal/model"
 )
 
 func (s *serv) Get(ctx context.Context, id int64) (*model.User, error) {

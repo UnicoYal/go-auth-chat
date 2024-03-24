@@ -2,11 +2,11 @@ package user
 
 import (
 	"context"
-	"go-auth-chat/internal/service/model"
+	"go-auth-chat/internal/model"
 )
 
-func (s *serv) Create(ctx context.Context, user *model.User) (int64, error) {
-	id, err := s.userRepository.Create(ctx, user)
+func (s *serv) Create(ctx context.Context, userInfo *model.UserInfo) (int64, error) {
+	id, err := s.userRepository.Create(ctx, userInfo)
 
 	if err != nil {
 		return 0, err

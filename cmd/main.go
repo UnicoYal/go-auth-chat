@@ -5,63 +5,58 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
+	userAPI "go-auth-chat/internal/api/user"
+	userRepository "go-auth-chat/internal/repository/user"
+	userService "go-auth-chat/internal/service/user"
 	desc "go-auth-chat/pkg/user/user_v1"
 
-	"github.com/brianvoe/gofakeit/v7"
-	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const serverPort = 50050
 
-type server struct {
-	desc.UnimplementedUserV1Server
-}
+func dbDSN() string {
+	err := godotenv.Load()
 
-func (s *server) CreateUser(ctx context.Context, req *desc.CreateUserRequest) (*desc.CreateUserResponse, error) {
-	log.Printf("CreateUser")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 
-	return &desc.CreateUserResponse{
-		Id: gofakeit.Int64(),
-	}, nil
-}
+	port := os.Getenv("PG_PORT")
+	user := os.Getenv("PG_USER")
+	dbname := os.Getenv("PG_DATABASE_NAME")
+	password := os.Getenv("PG_PASSWORD")
 
-func (s *server) GetUser(ctx context.Context, req *desc.GetUserRequest) (*desc.GetUserResponse, error) {
-	log.Printf("GetUser")
-
-	return &desc.GetUserResponse{
-		UserInfo: &desc.UserInfo{
-			Email: gofakeit.Email(),
-			Name:  gofakeit.Name(),
-			Role:  desc.UserRoles(gofakeit.Number(0, 1)),
-		}}, nil
-}
-
-func (s *server) UpdateUser(ctx context.Context, req *desc.UpdateUserRequest) (*empty.Empty, error) {
-	log.Printf("UpdateUser")
-
-	return &emptypb.Empty{}, nil
-}
-
-func (s *server) DeleteUser(ctx context.Context, req *desc.DeleteUserRequest) (*empty.Empty, error) {
-	log.Printf("DeleteUser")
-
-	return &emptypb.Empty{}, nil
+	return fmt.Sprintf("host=localhost port=%s user=%s dbname=%s password=%s sslmode=disable", port, user, dbname, password)
 }
 
 func main() {
+	ctx := context.Background()
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", serverPort))
 	if err != nil {
 		log.Fatal("Failed to listen: %v", err)
 	}
 
+	// Создаем пул соединений с базой данных
+	pool, err := pgxpool.Connect(ctx, dbDSN())
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	defer pool.Close()
+
+	userRepo := userRepository.NewRepository(pool)
+	userSrv := userService.NewService(userRepo)
+
 	s := grpc.NewServer()
 	reflection.Register(s)
 
-	desc.RegisterUserV1Server(s, &server{})
+	desc.RegisterUserV1Server(s, userAPI.NewImplementation(userSrv))
 
 	log.Printf("Server listening at %v", lis.Addr())
 

@@ -2,10 +2,10 @@ package user
 
 import (
 	"context"
+	modelServ "go-auth-chat/internal/model"
 	"go-auth-chat/internal/repository"
 	"go-auth-chat/internal/repository/user/converter"
 	modelRepo "go-auth-chat/internal/repository/user/model"
-	modelServ "go-auth-chat/internal/service/model"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -33,11 +33,11 @@ func NewRepository(db *pgxpool.Pool) repository.UserRepository {
 	return &repo{db: db}
 }
 
-func (r *repo) Create(ctx context.Context, user *modelServ.User) (int64, error) {
+func (r *repo) Create(ctx context.Context, userInfo *modelServ.UserInfo) (int64, error) {
 	builder := sq.Insert(tableName).
 		PlaceholderFormat(sq.Dollar).
 		Columns(emailColumn, nameColumn, roleColumn, passwordColumn, passwordConfirmColumn).
-		Values(user.Info.Email, user.Info.Name, user.Info.Role, user.Password, user.PasswordConfirm).
+		Values(userInfo.Email, userInfo.Name, userInfo.Role, userInfo.Password, userInfo.PasswordConfirm).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
@@ -69,12 +69,23 @@ func (r *repo) Get(ctx context.Context, id int64) (*modelServ.User, error) {
 		return nil, err
 	}
 
-	var user *modelRepo.User
-	err = r.db.QueryRow(ctx, query, args...).Scan(&user)
+	var user = &modelRepo.User{}
+	var email, name, role string
+	err = r.db.QueryRow(ctx, query, args...).Scan(&user.ID, &email, &name, &role, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		return nil, err
 	}
+
+	// Инициализация info перед использованием
+	info := &modelRepo.UserInfo{
+		Email: email,
+		Name:  name,
+		Role:  role,
+	}
+
+	// Присвоение info полю Info структуры user
+	user.Info = *info
 
 	return converter.ToUserFromRepo(user), nil
 }
