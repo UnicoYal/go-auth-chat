@@ -1,13 +1,13 @@
 package converter
 
 import (
-	modelServ "go-auth-chat/internal/service/model"
+	model "go-auth-chat/internal/model"
 	desc "go-auth-chat/pkg/user/user_v1"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ToUserFromService(user *modelServ.User) *desc.User {
+func ToUserFromService(user *model.User) *desc.User {
 	var updatedAt *timestamppb.Timestamp
 	if user.UpdatedAt.Valid {
 		updatedAt = timestamppb.New(user.UpdatedAt.Time)
@@ -16,17 +16,15 @@ func ToUserFromService(user *modelServ.User) *desc.User {
 	return &desc.User{
 		Id:              user.ID,
 		UserInfo:        ToUserInfoFromService(&user.Info),
-		Password:        user.Password,
-		PasswordConfirm: user.PasswordConfirm,
 		CreatedAt:       timestamppb.New(user.CreatedAt),
 		UpdatedAt:       updatedAt,
 	}
 }
 
-func ToUserInfoFromService(info *modelServ.UserInfo) *desc.UserInfo {
+func ToUserInfoFromService(info *model.UserInfo) *desc.UserInfo {
 	var roleStringToEnum = map[string]desc.UserRoles{
 		"admin": desc.UserRoles_admin,
-		"user": desc.UserRoles_user,
+		"user":  desc.UserRoles_user,
 	}
 	// Преобразование строки в значение перечисления UserRoles
 	roleEnum := roleStringToEnum[info.Role]
@@ -35,5 +33,24 @@ func ToUserInfoFromService(info *modelServ.UserInfo) *desc.UserInfo {
 		Email: info.Email,
 		Name:  info.Name,
 		Role:  roleEnum,
+		Password:        info.Password,
+		PasswordConfirm: info.PasswordConfirm,
+	}
+}
+
+func ToUserInfoFromDesc(info *desc.UserInfo) *model.UserInfo {
+	return &model.UserInfo{
+		Email:           info.Email,
+		Name:            info.Name,
+		Role:            info.Role.String(),
+		Password:        info.Password,
+		PasswordConfirm: info.PasswordConfirm,
+	}
+}
+
+func ToUserFromDesc(user *desc.User) *model.User {
+	return &model.User{
+		ID:   user.Id,
+		Info: *ToUserInfoFromDesc(user.UserInfo),
 	}
 }

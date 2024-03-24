@@ -1,7 +1,7 @@
 package converter
 
 import (
-	modelServ "go-auth-chat/internal/service/model"
+	modelServ "go-auth-chat/internal/model"
 	modelRepo "go-auth-chat/internal/repository/user/model"
 )
 

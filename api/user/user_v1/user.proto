@@ -23,8 +23,6 @@ enum UserRoles {
 message User {
   int64 id = 1;
   UserInfo user_info = 2;
-  string password = 3;
-  string password_confirm = 4;
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp updated_at = 6;
 }
@@ -33,14 +31,12 @@ message UserInfo {
   string email = 1;
   string name = 2;
   UserRoles role = 3;
+  string password = 4;
+  string password_confirm = 5;
 }
 
 message CreateUserRequest {
-  string email = 1;
-  string name = 2;
-  string password = 3;
-  string password_confirm = 4;
-  UserRoles role = 5;
+  UserInfo info = 1;
 }
 
 message CreateUserResponse {
